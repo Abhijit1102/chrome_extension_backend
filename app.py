@@ -48,7 +48,7 @@ async def send_processing_status(message: str):
     print(f"📩 Status Update: {message}")
 
 
-@app.post("/process_url")
+@app.post("/api/process_url")
 async def process_url(request: CollectionRequest, background_tasks: BackgroundTasks):
     """Process content from active tab URL asynchronously."""
     global web_url 
@@ -61,7 +61,7 @@ async def process_url(request: CollectionRequest, background_tasks: BackgroundTa
         raise HTTPException(status_code=500, detail=f"Error starting processing: {str(e)}")
 
 
-@app.post("/get_answer")
+@app.post("/api/get_answer")
 async def get_answer(request: QueryRequest):
     """Get an AI-generated answer based on similar texts and user query."""
     global web_url
@@ -78,7 +78,7 @@ async def get_answer(request: QueryRequest):
         raise HTTPException(status_code=500, detail=f"Error generating answer: {str(e)}")
 
 
-@app.post("/delete_collection")
+@app.post("/api/delete_collection")
 async def delete_collection():
     """Delete the active Qdrant collection."""
     try:
