@@ -1,6 +1,5 @@
-from fastapi import FastAPI, HTTPException, BackgroundTasks, Request
+from fastapi import FastAPI, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 from src.embeddings import HuggingFaceEmbedding
@@ -38,11 +37,13 @@ def health_check():
     """Health check route to verify if the API is running."""
     return {"status": "Healthy", "message": "API is up and running."}
 
+
 async def process_url_background(web_url: str):
     try:
         qdrant_manager.create_collection()
         await qdrant_manager.process_and_upload_chunks(web_url, embedding)
         print("✅ URL content processed and stored successfully.")
+        
         await send_processing_status("Tab content processed successfully.")
     except Exception as e:
         print(f"❌ Error processing URL: {str(e)}")
@@ -50,6 +51,7 @@ async def process_url_background(web_url: str):
 
 async def send_processing_status(message: str):
     print(f"📩 Status Update: {message}")
+
 
 @app.post("/api/v1/process_url")
 async def process_url(request: CollectionRequest, background_tasks: BackgroundTasks):
@@ -62,6 +64,7 @@ async def process_url(request: CollectionRequest, background_tasks: BackgroundTa
         return {"status": "Processing started. Please wait for completion."}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error starting processing: {str(e)}")
+
 
 @app.post("/api/v1/get_answer")
 async def get_answer(request: QueryRequest):
@@ -79,6 +82,7 @@ async def get_answer(request: QueryRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error generating answer: {str(e)}")
 
+
 @app.post("/api/v1/delete_collection")
 async def delete_collection():
     """Delete the active Qdrant collection."""
@@ -89,14 +93,6 @@ async def delete_collection():
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error deleting collection: {str(e)}")
 
-# 404 Not Found Handler
-@app.exception_handler(404)
-async def not_found_handler(request: Request, exc: HTTPException):
-    """Custom 404 Not Found handler."""
-    return JSONResponse(
-        status_code=404,
-        content={"status": "Error", "message": f"Endpoint {request.url.path} not found."}
-    )
 
 if __name__ == "__main__":
     import uvicorn
