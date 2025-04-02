@@ -32,6 +32,11 @@ class CollectionRequest(BaseModel):
 class QueryRequest(BaseModel):
     query_text: str
 
+@app.get("/api/v1/health")
+def health_check():
+    """Health check route to verify if the API is running."""
+    return {"status": "Healthy", "message": "API is up and running."}
+
 
 async def process_url_background(web_url: str):
     try:
@@ -48,7 +53,7 @@ async def send_processing_status(message: str):
     print(f"📩 Status Update: {message}")
 
 
-@app.post("/api/process_url")
+@app.post("/api/v1/process_url")
 async def process_url(request: CollectionRequest, background_tasks: BackgroundTasks):
     """Process content from active tab URL asynchronously."""
     global web_url 
@@ -61,7 +66,7 @@ async def process_url(request: CollectionRequest, background_tasks: BackgroundTa
         raise HTTPException(status_code=500, detail=f"Error starting processing: {str(e)}")
 
 
-@app.post("/api/get_answer")
+@app.post("/api/v1/get_answer")
 async def get_answer(request: QueryRequest):
     """Get an AI-generated answer based on similar texts and user query."""
     global web_url
@@ -78,7 +83,7 @@ async def get_answer(request: QueryRequest):
         raise HTTPException(status_code=500, detail=f"Error generating answer: {str(e)}")
 
 
-@app.post("/api/delete_collection")
+@app.post("/api/v1/delete_collection")
 async def delete_collection():
     """Delete the active Qdrant collection."""
     try:
