@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, BackgroundTasks
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
@@ -37,34 +37,19 @@ def health_check():
     """Health check route to verify if the API is running."""
     return {"status": "Healthy", "message": "API is up and running."}
 
+@app.post("/api/v1/process_url")
+async def process_url(request: CollectionRequest):
+    """Process content from the provided URL synchronously."""
+    global web_url
+    web_url = request.url  
 
-async def process_url_background(web_url: str):
     try:
         qdrant_manager.create_collection()
         await qdrant_manager.process_and_upload_chunks(web_url, embedding)
-        print("✅ URL content processed and stored successfully.")
-        
-        await send_processing_status("Tab content processed successfully.")
+        print(f"✅ URL '{web_url}' content processed and stored successfully.")
+        return {"status": "Success", "answer": "Your content is loaded successfully"}
     except Exception as e:
-        print(f"❌ Error processing URL: {str(e)}")
-        await send_processing_status(f"Error processing URL: {str(e)}")
-
-async def send_processing_status(message: str):
-    print(f"📩 Status Update: {message}")
-
-
-@app.post("/api/v1/process_url")
-async def process_url(request: CollectionRequest, background_tasks: BackgroundTasks):
-    """Process content from active tab URL asynchronously."""
-    global web_url 
-    try:
-        web_url = request.url  
-        background_tasks.add_task(process_url_background, web_url)
-
-        return {"status": "Processing started. Please wait for completion."}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error starting processing: {str(e)}")
-
+        raise HTTPException(status_code=500, detail=f"Error processing URL '{web_url}': {str(e)}")
 
 @app.post("/api/v1/get_answer")
 async def get_answer(request: QueryRequest):
